@@ -1,0 +1,1539 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Laboratorio de fractales</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111417;
+      --panel: #1b2026;
+      --panel-2: #242a31;
+      --text: #f2f5f7;
+      --muted: #aeb8c2;
+      --line: #39424c;
+      --accent: #34d3a3;
+      --accent-2: #f3b34c;
+      --danger: #ff6b6b;
+      --shadow: 0 18px 45px rgba(0, 0, 0, .28);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(145deg, rgba(52, 211, 163, .08), transparent 35%),
+        linear-gradient(315deg, rgba(243, 179, 76, .07), transparent 38%),
+        var(--bg);
+      color: var(--text);
+    }
+
+    button,
+    select,
+    input {
+      font: inherit;
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px clamp(16px, 3vw, 34px);
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(17, 20, 23, .76);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      display: grid;
+      gap: 4px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.2rem, 2vw, 1.65rem);
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .credit {
+      margin: 0;
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.3;
+    }
+
+    .status {
+      min-width: 14ch;
+      color: var(--muted);
+      font-size: .92rem;
+      text-align: right;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+      gap: 18px;
+      padding: 18px clamp(14px, 3vw, 34px) 24px;
+    }
+
+    .controls,
+    .viewport {
+      background: rgba(27, 32, 38, .92);
+      border: 1px solid rgba(255, 255, 255, .08);
+      box-shadow: var(--shadow);
+    }
+
+    .controls {
+      align-self: start;
+      display: grid;
+      gap: 16px;
+      padding: 18px;
+      border-radius: 8px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 10px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .control-block {
+      display: grid;
+      gap: 10px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px 12px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    .stat-grid strong {
+      color: var(--text);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
+    .formula-list {
+      display: grid;
+      gap: 7px;
+      margin: 0;
+      padding: 0;
+      color: var(--muted);
+      font-size: .9rem;
+      list-style: none;
+    }
+
+    .warning {
+      margin: 0;
+      padding: 9px 10px;
+      border: 1px solid rgba(243, 179, 76, .42);
+      border-radius: 6px;
+      background: rgba(243, 179, 76, .1);
+      color: #ffd899;
+      font-size: .86rem;
+      line-height: 1.35;
+    }
+
+    .control-group:last-child {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    label,
+    legend {
+      color: var(--muted);
+      font-size: .85rem;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    fieldset {
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+
+    select,
+    input[type="number"] {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 0 12px;
+      outline: none;
+    }
+
+    select:focus,
+    input:focus,
+    button:focus-visible {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(52, 211, 163, .18);
+      outline: none;
+    }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: 1fr 64px;
+      align-items: center;
+      gap: 10px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .value {
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .wide {
+      grid-column: 1 / -1;
+    }
+
+    button {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel-2);
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color .16s ease, background .16s ease, transform .16s ease;
+    }
+
+    button:hover {
+      border-color: rgba(52, 211, 163, .65);
+      background: #2a323a;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .primary {
+      border-color: rgba(52, 211, 163, .45);
+      background: #153f35;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 42px;
+    }
+
+    .toggle {
+      position: relative;
+      width: 54px;
+      height: 30px;
+      flex: 0 0 auto;
+    }
+
+    .toggle input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+    }
+
+    .toggle span {
+      position: absolute;
+      inset: 0;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #111820;
+      transition: background .18s ease, border-color .18s ease;
+    }
+
+    .toggle span::after {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      left: 3px;
+      top: 3px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: transform .18s ease, background .18s ease;
+    }
+
+    .toggle input:checked + span {
+      border-color: rgba(52, 211, 163, .72);
+      background: #153f35;
+    }
+
+    .toggle input:checked + span::after {
+      transform: translateX(24px);
+      background: var(--accent);
+    }
+
+    .viewport {
+      position: relative;
+      display: grid;
+      min-height: min(72vh, 820px);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .workspace {
+      display: grid;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .info-panel {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(27, 32, 38, .78);
+      box-shadow: var(--shadow);
+    }
+
+    .info-panel h2 {
+      margin: 0;
+      font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+      letter-spacing: 0;
+    }
+
+    .info-panel p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .info-panel ul {
+      display: grid;
+      gap: 6px;
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 520px;
+      background: #06080a;
+      cursor: grab;
+    }
+
+    canvas:active {
+      cursor: grabbing;
+    }
+
+    .overlay {
+      position: absolute;
+      left: 14px;
+      bottom: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: calc(100% - 28px);
+      pointer-events: none;
+    }
+
+    .pill {
+      padding: 6px 9px;
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 6px;
+      background: rgba(12, 15, 18, .78);
+      color: var(--muted);
+      font-size: .82rem;
+      font-variant-numeric: tabular-nums;
+      backdrop-filter: blur(10px);
+    }
+
+    @media (max-width: 860px) {
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .status {
+        text-align: left;
+      }
+
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      .controls {
+        position: static;
+      }
+
+      canvas {
+        min-height: 430px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      main {
+        padding-inline: 10px;
+      }
+
+      .button-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .viewport {
+        min-height: 58vh;
+      }
+
+      canvas {
+        min-height: 360px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <h1>Laboratorio de fractales</h1>
+        <p class="credit">Hecho por Gossen Ian para el trabajo de fractales</p>
+      </div>
+      <div class="status" id="status">Listo</div>
+    </header>
+
+    <main>
+      <aside class="controls" aria-label="Controles">
+        <div class="control-group">
+          <label for="fractal">Fractal</label>
+          <select id="fractal">
+            <option value="mandelbrot">Mandelbrot</option>
+            <option value="julia">Julia</option>
+            <option value="burningShip">Burning ship</option>
+            <option value="newton">Newton</option>
+            <option value="cantor">Conjunto de Cantor</option>
+            <option value="sierpinskiTriangle">Sierpinski</option>
+            <option value="sierpinskiCarpet">Alfombra de Sierpinski</option>
+            <option value="koch">Copo de nieve invertido</option>
+            <option value="tree">Arbol fractal</option>
+            <option value="fern">Helecho de Barnsley</option>
+            <option value="goldenDragon">Dragon dorado</option>
+          </select>
+        </div>
+
+        <fieldset class="control-group">
+          <legend>Render</legend>
+
+          <label for="palette">Paleta</label>
+          <select id="palette">
+            <option value="aurora">Aurora</option>
+            <option value="ember">Brasas</option>
+            <option value="ink">Tinta</option>
+            <option value="mono">Monocromo</option>
+          </select>
+
+          <div class="control-block" id="iterationsControls">
+            <label for="iterations">Iteraciones</label>
+            <div class="range-row">
+              <input id="iterations" type="range" min="0" max="20" step="1" value="12">
+              <span class="value" id="iterationsValue">12</span>
+            </div>
+            <p class="warning" id="iterationsWarning" hidden>
+              A partir de 13 iteraciones puede tardar mas tiempo, especialmente en fractales recursivos porque consumen mas recursos.
+            </p>
+          </div>
+
+        </fieldset>
+
+        <fieldset class="control-group" id="complexControls">
+          <legend>Parametro complejo</legend>
+          <label for="cReal">Real</label>
+          <div class="range-row">
+            <input id="cReal" type="range" min="-1.5" max="1.5" step="0.005" value="-0.72">
+            <span class="value" id="cRealValue">-0.72</span>
+          </div>
+
+          <label for="cImag">Imaginario</label>
+          <div class="range-row">
+            <input id="cImag" type="range" min="-1.5" max="1.5" step="0.005" value="0.28">
+            <span class="value" id="cImagValue">0.28</span>
+          </div>
+        </fieldset>
+
+        <div class="control-group">
+          <div class="button-grid">
+            <button id="zoomIn" title="Acercar" aria-label="Acercar">+</button>
+            <button id="zoomOut" title="Alejar" aria-label="Alejar">-</button>
+            <button id="reset" title="Reiniciar vista" aria-label="Reiniciar vista">Reset</button>
+            <button id="randomize" class="primary wide">Variar</button>
+            <button id="clear" class="wide">Limpiar</button>
+            <button id="download" class="wide">Descargar PNG</button>
+          </div>
+        </div>
+
+        <div class="control-group" id="animationControls">
+          <div class="toggle-row">
+            <label for="animate">Animar parametro</label>
+            <label class="toggle" title="Animar parametro">
+              <input id="animate" type="checkbox">
+              <span aria-hidden="true"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Estadisticas</label>
+          <div class="stat-grid">
+            <span>Etapa</span>
+            <strong id="statStage">0</strong>
+            <span>Elementos</span>
+            <strong id="statElements">1</strong>
+            <span>Metrica</span>
+            <strong id="statMetric">100%</strong>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Formulas</label>
+          <ul class="formula-list" id="formulaList">
+            <li>z = z^2 + c</li>
+          </ul>
+        </div>
+      </aside>
+
+      <div class="workspace">
+        <section class="viewport" aria-label="Vista del fractal">
+          <canvas id="canvas"></canvas>
+          <div class="overlay">
+            <span class="pill" id="zoomInfo">Zoom 1.00x</span>
+            <span class="pill" id="centerInfo">Centro 0.000, 0.000</span>
+            <span class="pill" id="timeInfo">0 ms</span>
+          </div>
+        </section>
+
+        <article class="info-panel">
+          <h2 id="infoTitle">Mandelbrot</h2>
+          <p id="infoSubtitle">El mapa clasico de los numeros complejos.</p>
+          <p id="infoDescription">Explora que puntos permanecen acotados al repetir z = z^2 + c.</p>
+          <ul id="infoFacts">
+            <li>Usa iteraciones para aumentar el detalle.</li>
+          </ul>
+        </article>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const viewport = document.querySelector(".viewport");
+    const ctx = canvas.getContext("2d");
+
+    const controls = {
+      fractal: document.getElementById("fractal"),
+      palette: document.getElementById("palette"),
+      iterations: document.getElementById("iterations"),
+      iterationsValue: document.getElementById("iterationsValue"),
+      iterationsWarning: document.getElementById("iterationsWarning"),
+      iterationsControls: document.getElementById("iterationsControls"),
+      cReal: document.getElementById("cReal"),
+      cRealValue: document.getElementById("cRealValue"),
+      cImag: document.getElementById("cImag"),
+      cImagValue: document.getElementById("cImagValue"),
+      complexControls: document.getElementById("complexControls"),
+      animate: document.getElementById("animate"),
+      animationControls: document.getElementById("animationControls"),
+      randomize: document.getElementById("randomize"),
+      status: document.getElementById("status"),
+      zoomInfo: document.getElementById("zoomInfo"),
+      centerInfo: document.getElementById("centerInfo"),
+      timeInfo: document.getElementById("timeInfo"),
+      statStage: document.getElementById("statStage"),
+      statElements: document.getElementById("statElements"),
+      statMetric: document.getElementById("statMetric"),
+      formulaList: document.getElementById("formulaList"),
+      infoTitle: document.getElementById("infoTitle"),
+      infoSubtitle: document.getElementById("infoSubtitle"),
+      infoDescription: document.getElementById("infoDescription"),
+      infoFacts: document.getElementById("infoFacts")
+    };
+
+    const state = {
+      centerX: -0.5,
+      centerY: 0,
+      scale: 3,
+      zoom: 1,
+      dragging: false,
+      dragX: 0,
+      dragY: 0,
+      animationId: 0,
+      renderId: 0
+    };
+
+    const defaultViews = {
+      mandelbrot: [-0.5, 0, 3],
+      julia: [0, 0, 3.2],
+      burningShip: [-0.45, -0.55, 3.2],
+      newton: [0, 0, 4],
+      cantor: [0, 0, 2],
+      sierpinskiTriangle: [0, 0, 2],
+      sierpinskiCarpet: [0, 0, 2],
+      koch: [0, 0, 2],
+      tree: [0, 0, 2],
+      fern: [0, 0, 2],
+      goldenDragon: [0, 0, 2]
+    };
+
+    const geometricFractals = new Set([
+      "cantor",
+      "sierpinskiTriangle",
+      "sierpinskiCarpet",
+      "koch",
+      "tree",
+      "goldenDragon"
+    ]);
+
+    const iterationFractals = new Set([
+      "mandelbrot",
+      "julia",
+      "burningShip",
+      "newton",
+      "fern"
+    ]);
+
+    const complexFractals = new Set(["julia"]);
+    const animatableFractals = new Set(["julia"]);
+
+    const iterationProfiles = {
+      mandelbrot: { min: 1, max: 20, step: 1, value: 12 },
+      julia: { min: 1, max: 20, step: 1, value: 12 },
+      burningShip: { min: 1, max: 20, step: 1, value: 12 },
+      newton: { min: 1, max: 20, step: 1, value: 12 },
+      cantor: { min: 0, max: 20, step: 1, value: 3 },
+      sierpinskiTriangle: { min: 0, max: 20, step: 1, value: 5 },
+      sierpinskiCarpet: { min: 0, max: 20, step: 1, value: 4 },
+      koch: { min: 0, max: 20, step: 1, value: 4 },
+      tree: { min: 0, max: 20, step: 1, value: 6 },
+      fern: { min: 1, max: 20, step: 1, value: 12 },
+      goldenDragon: { min: 0, max: 14, step: 1, value: 0 }
+    };
+
+    function getIterationCount() {
+      return Number(controls.iterations.value);
+    }
+
+    function applyIterationProfile(type, forceDefault = false) {
+      const profile = iterationProfiles[type] || iterationProfiles.mandelbrot;
+      const current = Number(controls.iterations.value);
+      controls.iterations.min = profile.min;
+      controls.iterations.max = profile.max;
+      controls.iterations.step = profile.step;
+      if (forceDefault || current < profile.min || current > profile.max || current % profile.step !== 0) {
+        controls.iterations.value = profile.value;
+      }
+    }
+
+    const PHI = (1 + Math.sqrt(5)) / 2;
+    const GOLDEN_DRAGON_MAX_ORDER = 14;
+    const GOLDEN_DRAGON_R = Math.pow(1 / PHI, 1 / PHI);
+    const GOLDEN_DRAGON_INITIAL_LENGTH = 5.5;
+    const GOLDEN_DRAGON_INTERNAL_ANGLE = Math.acos(
+      (1 + GOLDEN_DRAGON_R ** 2 - GOLDEN_DRAGON_R ** 4) / (2 * GOLDEN_DRAGON_R)
+    );
+    const GOLDEN_DRAGON_SHORT_BASE_ANGLE = Math.acos(
+      (1 + GOLDEN_DRAGON_R ** 4 - GOLDEN_DRAGON_R ** 2) / (2 * GOLDEN_DRAGON_R ** 2)
+    );
+
+    function mulberry32(seed) {
+      return function nextRandom() {
+        seed |= 0;
+        seed = seed + 0x6D2B79F5 | 0;
+        let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    const fractalInfo = {
+      mandelbrot: {
+        title: "Mandelbrot",
+        subtitle: "El mapa clasico de los numeros complejos.",
+        description: "Cada pixel representa un valor c. Si la sucesion z = z^2 + c no escapa, el punto pertenece al conjunto.",
+        facts: ["Tiene detalle infinito en sus bordes.", "Las zonas oscuras representan puntos que permanecen acotados."],
+        formulas: ["z0 = 0", "z(n+1) = z(n)^2 + c", "|z| > 2 implica escape"]
+      },
+      julia: {
+        title: "Julia",
+        subtitle: "Una familia de fractales controlada por un parametro complejo.",
+        description: "A diferencia de Mandelbrot, c queda fijo y cada pixel funciona como punto inicial z0.",
+        facts: ["El parametro complejo cambia por completo la forma.", "La animacion mueve c en una curva suave."],
+        formulas: ["z(n+1) = z(n)^2 + c", "c = a + bi", "|z| > 2 implica escape"]
+      },
+      burningShip: {
+        title: "Burning Ship",
+        subtitle: "Una variante reflejada de Mandelbrot.",
+        description: "Antes de elevar al cuadrado se toman los valores absolutos de las partes real e imaginaria.",
+        facts: ["Su silueta recuerda a una nave en llamas.", "Funciona mejor explorando zonas pequenas con zoom."],
+        formulas: ["z = (|Re(z)| + i|Im(z)|)^2 + c", "|z| > 2 implica escape"]
+      },
+      newton: {
+        title: "Newton",
+        subtitle: "Cuencas de atraccion del metodo de Newton.",
+        description: "Cada color indica hacia que raiz converge el metodo iterativo aplicado a z^3 - 1.",
+        facts: ["Muestra fronteras caoticas entre regiones estables.", "Sirve para visualizar convergencia numerica."],
+        formulas: ["f(z) = z^3 - 1", "z(n+1) = z - f(z) / f'(z)", "Raices: 1, omega, omega^2"]
+      },
+      cantor: {
+        title: "Conjunto de Cantor",
+        subtitle: "El polvo matematico de la infinitud.",
+        description: "Se construye quitando el tercio central de cada segmento, una y otra vez.",
+        facts: ["Tiene longitud total tendiendo a cero.", "Aun asi contiene infinitos puntos no aislados."],
+        formulas: ["Segmentos: 2^n", "Longitud de cada uno: (1/3)^n", "Longitud total: (2/3)^n"]
+      },
+      sierpinskiTriangle: {
+        title: "Triangulo de Sierpinski",
+        subtitle: "Un triangulo que se vacia sin perder estructura.",
+        description: "Cada etapa conserva tres copias reducidas del triangulo anterior.",
+        facts: ["Su dimension fractal es log(3) / log(2).", "Es uno de los ejemplos mas claros de autosimilitud."],
+        formulas: ["Triangulos: 3^n", "Escala: 1/2", "Dimension: log(3)/log(2)"]
+      },
+      sierpinskiCarpet: {
+        title: "Alfombra de Sierpinski",
+        subtitle: "Un cuadrado perforado recursivamente.",
+        description: "Cada cuadrado se divide en nueve y se elimina el centro.",
+        facts: ["El area tiende a cero.", "La frontera crece de manera fractal."],
+        formulas: ["Cuadrados: 8^n", "Escala: 1/3", "Area: (8/9)^n"]
+      },
+      koch: {
+        title: "Copo de nieve invertido",
+        subtitle: "Una curva de longitud infinita en area finita.",
+        description: "Cada segmento se reemplaza por cuatro segmentos mas pequenos formando un pico invertido.",
+        facts: ["El perimetro crece en cada etapa.", "La figura mantiene simetria triangular con orientacion invertida."],
+        formulas: ["Segmentos: 3 * 4^n", "Escala: 1/3", "Perimetro: (4/3)^n"]
+      },
+      tree: {
+        title: "Arbol fractal",
+        subtitle: "Ramificacion recursiva.",
+        description: "Cada rama genera dos ramas mas pequenas con angulos opuestos.",
+        facts: ["Modela patrones simples de crecimiento.", "Las iteraciones controlan cuantas generaciones aparecen."],
+        formulas: ["Ramas: 2^(n+1) - 1", "Longitud: L * r^n", "Angulos: +/- theta"]
+      },
+      fern: {
+        title: "Helecho de Barnsley",
+        subtitle: "Un fractal generado con transformaciones afines.",
+        description: "Cada punto nuevo se calcula con una de cuatro transformaciones elegidas por probabilidad.",
+        facts: ["Produce una forma botanica con reglas muy compactas.", "Las iteraciones controlan la densidad de puntos."],
+        formulas: ["IFS con 4 transformaciones", "Probabilidades: 1%, 85%, 7%, 7%", "P(n+1) = A * P(n) + b"]
+      },
+      goldenDragon: {
+        title: "Dragon dorado",
+        subtitle: "Dragon construido con proporcion aurea.",
+        description: "Cada segmento se transforma en dos tramos usando distancias y angulos derivados de phi.",
+        facts: ["El orden n indica cuantas veces se aplica la transformacion.", "En cada orden los segmentos se duplican: 1, 2, 4, 8..."],
+        formulas: ["phi = (1 + sqrt(5)) / 2", "R = (1 / phi)^(1 / phi)", "Segmentos: 2^n", "Puntos: 2^n + 1"]
+      }
+    };
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.max(1, Math.floor(rect.width));
+      canvas.height = Math.max(1, Math.floor(rect.height));
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      scheduleRender();
+    }
+
+    function resetView() {
+      const view = defaultViews[controls.fractal.value];
+      state.centerX = view[0];
+      state.centerY = view[1];
+      state.scale = view[2];
+      state.zoom = 1;
+      updateControlValues(true);
+      scheduleRender();
+    }
+
+    function pixelToPlane(px, py) {
+      const rect = canvas.getBoundingClientRect();
+      const aspect = rect.width / rect.height;
+      const x = state.centerX + ((px / rect.width) - 0.5) * state.scale * aspect;
+      const y = state.centerY + ((py / rect.height) - 0.5) * state.scale;
+      return [x, y];
+    }
+
+    function colorize(t, escaped) {
+      if (!escaped) return [4, 7, 9, 255];
+      const p = controls.palette.value;
+      const s = Math.max(0, Math.min(1, t));
+      if (p === "ember") {
+        return [
+          Math.round(28 + 227 * Math.pow(s, .45)),
+          Math.round(12 + 128 * Math.sin(s * Math.PI)),
+          Math.round(8 + 56 * Math.pow(1 - s, 2)),
+          255
+        ];
+      }
+      if (p === "ink") {
+        return [
+          Math.round(20 + 60 * s),
+          Math.round(42 + 145 * Math.pow(s, .8)),
+          Math.round(70 + 180 * Math.pow(s, .55)),
+          255
+        ];
+      }
+      if (p === "mono") {
+        const v = Math.round(22 + 228 * s);
+        return [v, v, v, 255];
+      }
+      return [
+        Math.round(26 + 90 * Math.sin(s * Math.PI)),
+        Math.round(80 + 160 * Math.pow(s, .5)),
+        Math.round(115 + 120 * Math.pow(1 - s, .8)),
+        255
+      ];
+    }
+
+    function setPixel(data, index, rgba) {
+      data[index] = rgba[0];
+      data[index + 1] = rgba[1];
+      data[index + 2] = rgba[2];
+      data[index + 3] = rgba[3];
+    }
+
+    function mandelbrotPoint(cx, cy, maxIter) {
+      let x = 0;
+      let y = 0;
+      let i = 0;
+      while (x * x + y * y <= 4 && i < maxIter) {
+        const nx = x * x - y * y + cx;
+        y = 2 * x * y + cy;
+        x = nx;
+        i++;
+      }
+      if (i === maxIter) return { t: 0, escaped: false };
+      const mag = Math.sqrt(x * x + y * y);
+      const smooth = i + 1 - Math.log(Math.log(Math.max(mag, 2))) / Math.log(2);
+      return { t: smooth / maxIter, escaped: true };
+    }
+
+    function juliaPoint(x, y, maxIter) {
+      const cr = Number(controls.cReal.value);
+      const ci = Number(controls.cImag.value);
+      let i = 0;
+      while (x * x + y * y <= 4 && i < maxIter) {
+        const nx = x * x - y * y + cr;
+        y = 2 * x * y + ci;
+        x = nx;
+        i++;
+      }
+      return i === maxIter ? { t: 0, escaped: false } : { t: i / maxIter, escaped: true };
+    }
+
+    function burningShipPoint(cx, cy, maxIter) {
+      let x = 0;
+      let y = 0;
+      let i = 0;
+      while (x * x + y * y <= 4 && i < maxIter) {
+        const ax = Math.abs(x);
+        const ay = Math.abs(y);
+        const nx = ax * ax - ay * ay + cx;
+        y = 2 * ax * ay + cy;
+        x = nx;
+        i++;
+      }
+      return i === maxIter ? { t: 0, escaped: false } : { t: i / maxIter, escaped: true };
+    }
+
+    function newtonPoint(x, y, maxIter) {
+      let zx = x;
+      let zy = y;
+      let i = 0;
+      const roots = [
+        [1, 0],
+        [-0.5, Math.sqrt(3) / 2],
+        [-0.5, -Math.sqrt(3) / 2]
+      ];
+      for (; i < maxIter; i++) {
+        const r2 = zx * zx + zy * zy;
+        if (r2 < 1e-10) break;
+        const r4 = r2 * r2;
+        const nx = (2 * zx + (zx * zx - zy * zy) / r4) / 3;
+        const ny = (2 * zy - (2 * zx * zy) / r4) / 3;
+        zx = nx;
+        zy = ny;
+        for (let k = 0; k < roots.length; k++) {
+          const dx = zx - roots[k][0];
+          const dy = zy - roots[k][1];
+          if (dx * dx + dy * dy < 1e-8) {
+            const base = k / 3;
+            return { t: base + Math.min(.32, i / maxIter) * .6, escaped: true };
+          }
+        }
+      }
+      return { t: i / maxIter, escaped: true };
+    }
+
+    function drawEscapeFractal(fn) {
+      const w = canvas.width;
+      const h = canvas.height;
+      const logicalW = Math.floor(w);
+      const logicalH = Math.floor(h);
+      const image = ctx.createImageData(logicalW, logicalH);
+      const data = image.data;
+      const maxIter = Number(controls.iterations.value);
+      const aspect = logicalW / logicalH;
+      for (let py = 0; py < logicalH; py++) {
+        const y = state.centerY + (py / logicalH - 0.5) * state.scale;
+        for (let px = 0; px < logicalW; px++) {
+          const x = state.centerX + (px / logicalW - 0.5) * state.scale * aspect;
+          const result = fn(x, y, maxIter);
+          setPixel(data, (py * logicalW + px) * 4, colorize(result.t, result.escaped));
+        }
+      }
+      ctx.putImageData(image, 0, 0);
+    }
+
+    function clearCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      ctx.fillStyle = "#06080a";
+      ctx.fillRect(0, 0, rect.width, rect.height);
+    }
+
+    function planeToCanvas(x, y) {
+      const rect = canvas.getBoundingClientRect();
+      const aspect = rect.width / rect.height;
+      return [
+        ((x - state.centerX) / (state.scale * aspect) + 0.5) * rect.width,
+        ((y - state.centerY) / state.scale + 0.5) * rect.height
+      ];
+    }
+
+    function drawWorldLine(a, b) {
+      const p1 = planeToCanvas(a[0], a[1]);
+      const p2 = planeToCanvas(b[0], b[1]);
+      ctx.beginPath();
+      ctx.moveTo(p1[0], p1[1]);
+      ctx.lineTo(p2[0], p2[1]);
+      ctx.stroke();
+    }
+
+    function fillWorldPolygon(points) {
+      const projected = points.map(point => planeToCanvas(point[0], point[1]));
+      ctx.beginPath();
+      projected.forEach((point, index) => {
+        if (index === 0) ctx.moveTo(point[0], point[1]);
+        else ctx.lineTo(point[0], point[1]);
+      });
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function fillWorldRect(x, y, width, height) {
+      const topLeft = planeToCanvas(x, y);
+      const bottomRight = planeToCanvas(x + width, y + height);
+      const left = Math.min(topLeft[0], bottomRight[0]);
+      const top = Math.min(topLeft[1], bottomRight[1]);
+      ctx.fillRect(left, top, Math.abs(bottomRight[0] - topLeft[0]), Math.abs(bottomRight[1] - topLeft[1]));
+    }
+
+    function worldDistanceToPixels(a, b) {
+      const p1 = planeToCanvas(a[0], a[1]);
+      const p2 = planeToCanvas(b[0], b[1]);
+      return Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
+    }
+
+    function drawLine(a, b, depth, maxDepth) {
+      const s = depth / Math.max(1, maxDepth);
+      const [r, g, blue] = colorize(s, true);
+      ctx.strokeStyle = `rgb(${r}, ${g}, ${blue})`;
+      ctx.beginPath();
+      ctx.moveTo(a[0], a[1]);
+      ctx.lineTo(b[0], b[1]);
+      ctx.stroke();
+    }
+
+    function drawCantor() {
+      clearCanvas();
+      const depth = getIterationCount();
+      const width = 1.9;
+      const startX = -width / 2;
+      const startY = -0.72;
+      const gap = depth === 0 ? 0 : Math.min(0.18, 1.45 / depth);
+      ctx.lineCap = "round";
+
+      function segment(x, y, length, level) {
+        const c = colorize(level / Math.max(1, depth), true);
+        ctx.strokeStyle = `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+        ctx.lineWidth = Math.max(2, 8 - level * .55);
+        drawWorldLine([x, y], [x + length, y]);
+        if (level >= depth || worldDistanceToPixels([x, y], [x + length, y]) < 1.5) return;
+        segment(x, y + gap, length / 3, level + 1);
+        segment(x + length * 2 / 3, y + gap, length / 3, level + 1);
+      }
+
+      segment(startX, startY, width, 0);
+    }
+
+    function drawTree() {
+      clearCanvas();
+      const depth = getIterationCount();
+      const baseLength = 0.48;
+      const baseX = 0;
+      const baseY = 0.78;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      function branch(x, y, length, angle, level) {
+        const nx = x + Math.cos(angle) * length;
+        const ny = y + Math.sin(angle) * length;
+        const t = 1 - level / Math.max(1, depth);
+        const c = colorize(.2 + t * .72, true);
+        ctx.strokeStyle = `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+        ctx.lineWidth = Math.max(1, level * 1.45);
+        drawWorldLine([x, y], [nx, ny]);
+        if (level <= 0 || worldDistanceToPixels([x, y], [nx, ny]) < 1.2) return;
+        branch(nx, ny, length * .68, angle - .55, level - 1);
+        branch(nx, ny, length * .68, angle + .55, level - 1);
+      }
+
+      branch(baseX, baseY, baseLength, -Math.PI / 2, depth);
+    }
+
+    function drawSierpinskiTriangle() {
+      clearCanvas();
+      const depth = getIterationCount();
+      const points = [
+        [0, -0.78],
+        [-0.88, 0.74],
+        [0.88, 0.74]
+      ];
+      ctx.fillStyle = "#f2f5f7";
+
+      function triangle(a, b, c, d) {
+        if (d === 0 || worldDistanceToPixels(a, b) < 1.2) {
+          const shade = colorize(.35 + ((a[1] + .8) / 1.6) * .55, true);
+          ctx.fillStyle = `rgb(${shade[0]}, ${shade[1]}, ${shade[2]})`;
+          fillWorldPolygon([a, b, c]);
+          return;
+        }
+        const ab = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+        const ac = [(a[0] + c[0]) / 2, (a[1] + c[1]) / 2];
+        const bc = [(b[0] + c[0]) / 2, (b[1] + c[1]) / 2];
+        triangle(a, ab, ac, d - 1);
+        triangle(ab, b, bc, d - 1);
+        triangle(ac, bc, c, d - 1);
+      }
+
+      triangle(points[0], points[1], points[2], depth);
+    }
+
+    function drawSierpinskiCarpet() {
+      clearCanvas();
+      const depth = getIterationCount();
+      const size = 1.55;
+      const x = -size / 2;
+      const y = -size / 2;
+      ctx.fillStyle = "#eef3f6";
+      fillWorldRect(x, y, size, size);
+      ctx.fillStyle = "#06080a";
+
+      function cut(px, py, s, d) {
+        if (d === 0) return;
+        const third = s / 3;
+        if (worldDistanceToPixels([px, py], [px + third, py]) < 1) return;
+        fillWorldRect(px + third, py + third, third, third);
+        for (let yy = 0; yy < 3; yy++) {
+          for (let xx = 0; xx < 3; xx++) {
+            if (xx !== 1 || yy !== 1) cut(px + xx * third, py + yy * third, third, d - 1);
+          }
+        }
+      }
+
+      cut(x, y, size, depth);
+    }
+
+    function drawKoch() {
+      clearCanvas();
+      const depth = getIterationCount();
+      ctx.lineWidth = 2;
+
+      function kochSegment(a, b, level) {
+        const c = colorize((depth - level) / Math.max(1, depth), true);
+        ctx.strokeStyle = `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+        if (level <= 0 || worldDistanceToPixels(a, b) < 1.2) {
+          drawWorldLine(a, b);
+          return;
+        }
+        const dx = b[0] - a[0];
+        const dy = b[1] - a[1];
+        const p1 = [a[0] + dx / 3, a[1] + dy / 3];
+        const p3 = [a[0] + 2 * dx / 3, a[1] + 2 * dy / 3];
+        const angle = -Math.PI / 3;
+        const p2 = [
+          p1[0] + (dx / 3) * Math.cos(angle) - (dy / 3) * Math.sin(angle),
+          p1[1] + (dx / 3) * Math.sin(angle) + (dy / 3) * Math.cos(angle)
+        ];
+        kochSegment(a, p1, level - 1);
+        kochSegment(p1, p2, level - 1);
+        kochSegment(p2, p3, level - 1);
+        kochSegment(p3, b, level - 1);
+      }
+
+      kochSegment([-0.86, 0.48], [0.86, 0.48], depth);
+      kochSegment([0.86, 0.48], [0, -1.0], depth);
+      kochSegment([0, -1.0], [-0.86, 0.48], depth);
+    }
+
+    function drawFern() {
+      clearCanvas();
+      const rect = canvas.getBoundingClientRect();
+      const iterations = Number(controls.iterations.value) * 120;
+      const image = ctx.getImageData(0, 0, Math.floor(rect.width), Math.floor(rect.height));
+      const data = image.data;
+      const random = mulberry32(917263);
+      let x = 0;
+      let y = 0;
+      for (let i = 0; i < iterations; i++) {
+        const r = random();
+        let nx;
+        let ny;
+        if (r < .01) {
+          nx = 0;
+          ny = .16 * y;
+        } else if (r < .86) {
+          nx = .85 * x + .04 * y;
+          ny = -.04 * x + .85 * y + 1.6;
+        } else if (r < .93) {
+          nx = .2 * x - .26 * y;
+          ny = .23 * x + .22 * y + 1.6;
+        } else {
+          nx = -.15 * x + .28 * y;
+          ny = .26 * x + .24 * y + .44;
+        }
+        x = nx;
+        y = ny;
+        const point = planeToCanvas(x / 3.2, 0.96 - y / 5.25);
+        const px = Math.floor(point[0]);
+        const py = Math.floor(point[1]);
+        if (px >= 0 && px < rect.width && py >= 0 && py < rect.height) {
+          const c = colorize(y / 10, true);
+          const idx = (py * Math.floor(rect.width) + px) * 4;
+          data[idx] = c[0];
+          data[idx + 1] = c[1];
+          data[idx + 2] = c[2];
+          data[idx + 3] = 255;
+        }
+      }
+      ctx.putImageData(image, 0, 0);
+    }
+
+    function calculateGoldenDragonPeak(p1, p2, isEven, progress = 1) {
+      const vx = p2[0] - p1[0];
+      const vy = p2[1] - p1[1];
+      const dist = Math.hypot(vx, vy);
+      if (dist === 0) return p1;
+      const baseAngle = Math.atan2(vy, vx);
+      if (isEven) {
+        const peakAngle = baseAngle - GOLDEN_DRAGON_INTERNAL_ANGLE * progress;
+        const peakDist = dist * (0.5 + (GOLDEN_DRAGON_R - 0.5) * progress);
+        return [
+          p1[0] + Math.cos(peakAngle) * peakDist,
+          p1[1] + Math.sin(peakAngle) * peakDist
+        ];
+      }
+      const peakAngle = baseAngle + GOLDEN_DRAGON_SHORT_BASE_ANGLE * progress;
+      const peakDist = dist * (0.5 + (GOLDEN_DRAGON_R ** 2 - 0.5) * progress);
+      return [
+        p1[0] + Math.cos(peakAngle) * peakDist,
+        p1[1] + Math.sin(peakAngle) * peakDist
+      ];
+    }
+
+    function transformGoldenDragon(points, progress = 1) {
+      const next = [];
+      for (let i = 0; i < points.length - 1; i++) {
+        const p1 = points[i];
+        const p2 = points[i + 1];
+        const peak = calculateGoldenDragonPeak(p1, p2, i % 2 === 0, progress);
+        if (i === 0) next.push(p1, peak, p2);
+        else next.push(peak, p2);
+      }
+      return next;
+    }
+
+    function generateGoldenDragon(order) {
+      let points = [
+        [GOLDEN_DRAGON_INITIAL_LENGTH / 2, 0],
+        [-GOLDEN_DRAGON_INITIAL_LENGTH / 2, 0]
+      ];
+      for (let i = 0; i < order; i++) {
+        points = transformGoldenDragon(points, 1);
+      }
+      return points;
+    }
+
+    function drawGoldenDragon() {
+      clearCanvas();
+      const order = Math.min(getIterationCount(), GOLDEN_DRAGON_MAX_ORDER);
+      const points = generateGoldenDragon(order);
+      const xs = points.map(p => p[0]);
+      const ys = points.map(p => p[1]);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+      const spanX = Math.max(maxX - minX, 1);
+      const spanY = Math.max(maxY - minY, 1);
+      const fit = 1.65 / Math.max(spanX, spanY);
+      const midX = (minX + maxX) / 2;
+      const midY = (minY + maxY) / 2;
+      const worldPoints = points.map(p => [(p[0] - midX) * fit, (p[1] - midY) * fit]);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(0, 240, 255, .18)";
+      ctx.beginPath();
+      worldPoints.forEach((p, i) => {
+        const projected = planeToCanvas(p[0], p[1]);
+        if (i === 0) ctx.moveTo(projected[0], projected[1]);
+        else ctx.lineTo(projected[0], projected[1]);
+      });
+      ctx.stroke();
+
+      ctx.lineWidth = 1.4;
+      for (let i = 0; i < worldPoints.length - 1; i++) {
+        const t = i / Math.max(1, worldPoints.length - 2);
+        const a = worldPoints[i];
+        const b = worldPoints[i + 1];
+        const alt = i % 2 === 0;
+        ctx.strokeStyle = alt
+          ? `rgba(${Math.round(20 + 235 * t)}, ${Math.round(210 + 30 * (1 - t))}, 255, .95)`
+          : `rgba(255, ${Math.round(15 + 180 * t)}, ${Math.round(115 + 70 * (1 - t))}, .92)`;
+        drawWorldLine(a, b);
+      }
+      ctx.lineWidth = .75;
+      ctx.strokeStyle = "rgba(255, 255, 255, .55)";
+      ctx.beginPath();
+      worldPoints.forEach((p, i) => {
+        const projected = planeToCanvas(p[0], p[1]);
+        if (i === 0) ctx.moveTo(projected[0], projected[1]);
+        else ctx.lineTo(projected[0], projected[1]);
+      });
+      ctx.stroke();
+    }
+
+    function render() {
+      const start = performance.now();
+      controls.status.textContent = "Renderizando";
+      const type = controls.fractal.value;
+      if (type === "mandelbrot") drawEscapeFractal(mandelbrotPoint);
+      if (type === "julia") drawEscapeFractal(juliaPoint);
+      if (type === "burningShip") drawEscapeFractal(burningShipPoint);
+      if (type === "newton") drawEscapeFractal(newtonPoint);
+      if (type === "cantor") drawCantor();
+      if (type === "sierpinskiTriangle") drawSierpinskiTriangle();
+      if (type === "sierpinskiCarpet") drawSierpinskiCarpet();
+      if (type === "koch") drawKoch();
+      if (type === "tree") drawTree();
+      if (type === "fern") drawFern();
+      if (type === "goldenDragon") drawGoldenDragon();
+      const elapsed = Math.round(performance.now() - start);
+      controls.status.textContent = "Listo";
+      controls.timeInfo.textContent = `${elapsed} ms`;
+      controls.zoomInfo.textContent = `Zoom ${state.zoom.toFixed(2)}x`;
+      controls.centerInfo.textContent = `Centro ${state.centerX.toFixed(3)}, ${state.centerY.toFixed(3)}`;
+      updateInfoPanel();
+    }
+
+    function scheduleRender() {
+      ++state.renderId;
+      controls.status.textContent = "Preparando";
+      render();
+    }
+
+    function updateControlValues(forceDefaultIterations = false) {
+      const type = controls.fractal.value;
+      const usesComplex = complexFractals.has(type);
+      const canAnimate = animatableFractals.has(type);
+      applyIterationProfile(type, forceDefaultIterations);
+
+      controls.iterationsValue.textContent = controls.iterations.value;
+      const isGoldenDragon = type === "goldenDragon";
+      controls.iterationsWarning.textContent = isGoldenDragon
+        ? `El Dragon dorado esta limitado a ${GOLDEN_DRAGON_MAX_ORDER} iteraciones para evitar que desaparezca o consuma demasiados recursos.`
+        : "A partir de 13 iteraciones puede tardar mas tiempo, especialmente en fractales recursivos porque consumen mas recursos.";
+      controls.iterationsWarning.hidden = getIterationCount() <= 12;
+      controls.cRealValue.textContent = Number(controls.cReal.value).toFixed(2);
+      controls.cImagValue.textContent = Number(controls.cImag.value).toFixed(2);
+
+      controls.iterationsControls.hidden = false;
+      controls.iterations.disabled = false;
+      controls.complexControls.hidden = !usesComplex;
+      controls.cReal.disabled = !usesComplex;
+      controls.cImag.disabled = !usesComplex;
+      controls.animationControls.hidden = !canAnimate;
+      controls.animate.disabled = !canAnimate;
+
+      if (!canAnimate && controls.animate.checked) {
+        controls.animate.checked = false;
+        cancelAnimationFrame(state.animationId);
+      }
+
+      controls.randomize.textContent = usesComplex ? "Variar complejo" : "Variar fractal";
+      updateInfoPanel();
+    }
+
+    function formatPercent(value) {
+      return `${(value * 100).toFixed(value < .1 ? 2 : 1)}%`;
+    }
+
+    function getStats(type) {
+      const iterations = getIterationCount();
+      if (type === "cantor") {
+        return { stage: iterations, elements: 2 ** iterations, metric: formatPercent((2 / 3) ** iterations) };
+      }
+      if (type === "sierpinskiTriangle") {
+        return { stage: iterations, elements: 3 ** iterations, metric: `D ${ (Math.log(3) / Math.log(2)).toFixed(4) }` };
+      }
+      if (type === "sierpinskiCarpet") {
+        return { stage: iterations, elements: 8 ** iterations, metric: formatPercent((8 / 9) ** iterations) };
+      }
+      if (type === "koch") {
+        return { stage: iterations, elements: 3 * 4 ** iterations, metric: `${((4 / 3) ** iterations).toFixed(2)}x` };
+      }
+      if (type === "tree") {
+        return { stage: iterations, elements: 2 ** (iterations + 1) - 1, metric: `${iterations} niveles` };
+      }
+      if (type === "goldenDragon") {
+        const order = Math.min(iterations, GOLDEN_DRAGON_MAX_ORDER);
+        return {
+          stage: order,
+          elements: `${2 ** order} segmentos`,
+          metric: `${2 ** order + 1} puntos`
+        };
+      }
+      if (type === "fern") {
+        return { stage: iterations, elements: iterations * 120, metric: "IFS" };
+      }
+      return { stage: iterations, elements: `${canvas.width}x${canvas.height}`, metric: "escape" };
+    }
+
+    function updateInfoPanel() {
+      const type = controls.fractal.value;
+      const info = fractalInfo[type];
+      if (!info) return;
+      const stats = getStats(type);
+      controls.statStage.textContent = stats.stage;
+      controls.statElements.textContent = stats.elements;
+      controls.statMetric.textContent = stats.metric;
+      controls.formulaList.innerHTML = info.formulas.map(item => `<li>${item}</li>`).join("");
+      controls.infoTitle.textContent = info.title;
+      controls.infoSubtitle.textContent = info.subtitle;
+      controls.infoDescription.textContent = info.description;
+      controls.infoFacts.innerHTML = info.facts.map(item => `<li>${item}</li>`).join("");
+    }
+
+    function setView(centerX, centerY, scale) {
+      const baseScale = defaultViews[controls.fractal.value][2];
+      state.centerX = centerX;
+      state.centerY = centerY;
+      state.scale = scale;
+      state.zoom = baseScale / scale;
+    }
+
+    function zoomAt(factor, px, py) {
+      const before = pixelToPlane(px, py);
+      const baseScale = defaultViews[controls.fractal.value][2];
+      const nextScale = Math.min(baseScale * 50, Math.max(baseScale / 500000, state.scale / factor));
+      if (nextScale === state.scale) return;
+      state.scale = nextScale;
+      state.zoom = baseScale / state.scale;
+      const after = pixelToPlane(px, py);
+      state.centerX += before[0] - after[0];
+      state.centerY += before[1] - after[1];
+      scheduleRender();
+    }
+
+    function randomize() {
+      const type = controls.fractal.value;
+      const juliaSamples = [
+        [-0.8, .156],
+        [.285, .01],
+        [-.70176, -.3842],
+        [-.835, -.2321],
+        [-.4, .6],
+        [.355, .355]
+      ];
+      const viewSamples = {
+        mandelbrot: [
+          [-0.7453, 0.1127, 0.018],
+          [-0.74364, 0.13183, 0.006],
+          [-0.1011, 0.9563, 0.11],
+          [-1.25066, 0.02012, 0.045]
+        ],
+        burningShip: [
+          [-1.7443, -0.0171, 0.035],
+          [-1.86, -0.04, 0.11],
+          [-0.45, -0.55, 3.2]
+        ],
+        newton: [
+          [0, 0, 4],
+          [0.35, 0.2, 1.9],
+          [-0.2, -0.35, 2.2]
+        ]
+      };
+
+      if (type === "julia") {
+        const sample = juliaSamples[Math.floor(Math.random() * juliaSamples.length)];
+        controls.cReal.value = sample[0];
+        controls.cImag.value = sample[1];
+      } else if (viewSamples[type]) {
+        const sample = viewSamples[type][Math.floor(Math.random() * viewSamples[type].length)];
+        setView(sample[0], sample[1], sample[2]);
+      } else if (type === "fern") {
+        controls.iterations.value = String([6, 10, 12, 16, 20][Math.floor(Math.random() * 5)]);
+        state.centerX = (Math.random() - .5) * .8;
+        state.centerY = (Math.random() - .5) * .6;
+        const zoom = 1 + Math.random() * .65;
+        state.scale = defaultViews.fern[2] / zoom;
+        state.zoom = zoom;
+      } else if (geometricFractals.has(type)) {
+        const iterationSamples = {
+          cantor: [0, 3, 6, 9, 12, 16, 20],
+          sierpinskiTriangle: [0, 3, 5, 8, 12, 16, 20],
+          sierpinskiCarpet: [0, 2, 4, 6, 9, 12, 16, 20],
+          koch: [0, 2, 4, 6, 9, 12, 16, 20],
+          tree: [0, 3, 6, 9, 12, 16, 20],
+          goldenDragon: [0, 3, 6, 9, 12, 14]
+        };
+        const samples = iterationSamples[type];
+        controls.iterations.value = String(samples[Math.floor(Math.random() * samples.length)]);
+      }
+
+      controls.palette.value = ["aurora", "ember", "ink", "mono"][Math.floor(Math.random() * 4)];
+      updateControlValues();
+      scheduleRender();
+    }
+
+    function animate() {
+      if (!controls.animate.checked) return;
+      const t = performance.now() / 1400;
+      controls.cReal.value = (-0.72 + Math.cos(t) * .12).toFixed(3);
+      controls.cImag.value = (0.28 + Math.sin(t * .8) * .16).toFixed(3);
+      updateControlValues();
+      render();
+      state.animationId = requestAnimationFrame(animate);
+    }
+
+    ["fractal", "palette", "iterations", "cReal", "cImag"].forEach(key => {
+      controls[key].addEventListener("input", () => {
+        updateControlValues(key === "fractal");
+        if (key === "fractal") resetView();
+        else scheduleRender();
+      });
+    });
+
+    document.getElementById("zoomIn").addEventListener("click", () => {
+      const rect = canvas.getBoundingClientRect();
+      zoomAt(1.45, rect.width / 2, rect.height / 2);
+    });
+
+    document.getElementById("zoomOut").addEventListener("click", () => {
+      const rect = canvas.getBoundingClientRect();
+      zoomAt(1 / 1.45, rect.width / 2, rect.height / 2);
+    });
+
+    document.getElementById("reset").addEventListener("click", resetView);
+    document.getElementById("randomize").addEventListener("click", randomize);
+    document.getElementById("clear").addEventListener("click", () => {
+      cancelAnimationFrame(state.animationId);
+      controls.animate.checked = false;
+      clearCanvas();
+      controls.status.textContent = "Limpio";
+      controls.timeInfo.textContent = "0 ms";
+    });
+
+    document.getElementById("download").addEventListener("click", () => {
+      const link = document.createElement("a");
+      link.download = `${controls.fractal.value}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    });
+
+    controls.animate.addEventListener("change", () => {
+      cancelAnimationFrame(state.animationId);
+      if (controls.animate.checked) animate();
+    });
+
+    viewport.addEventListener("wheel", event => {
+      event.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const factor = event.deltaY < 0 ? 1.2 : 1 / 1.2;
+      zoomAt(factor, event.clientX - rect.left, event.clientY - rect.top);
+    }, { passive: false });
+
+    canvas.addEventListener("pointerdown", event => {
+      state.dragging = true;
+      state.dragX = event.clientX;
+      state.dragY = event.clientY;
+      canvas.setPointerCapture(event.pointerId);
+    });
+
+    canvas.addEventListener("pointermove", event => {
+      if (!state.dragging) return;
+      const rect = canvas.getBoundingClientRect();
+      const dx = event.clientX - state.dragX;
+      const dy = event.clientY - state.dragY;
+      const aspect = rect.width / rect.height;
+      state.centerX -= dx / rect.width * state.scale * aspect;
+      state.centerY -= dy / rect.height * state.scale;
+      state.dragX = event.clientX;
+      state.dragY = event.clientY;
+      scheduleRender();
+    });
+
+    canvas.addEventListener("pointerup", event => {
+      state.dragging = false;
+      canvas.releasePointerCapture(event.pointerId);
+    });
+
+    canvas.addEventListener("dblclick", event => {
+      const rect = canvas.getBoundingClientRect();
+      zoomAt(1.8, event.clientX - rect.left, event.clientY - rect.top);
+    });
+
+    window.addEventListener("resize", resizeCanvas);
+    updateControlValues();
+    resizeCanvas();
+    resetView();
+  </script>
+</body>
+</html>
